@@ -15,4 +15,3 @@ class ComplexNumber:
 
     def __sub__(self, other):
         return complex(self.a, self.b) - complex(other.a, other.b)
-
