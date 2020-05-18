@@ -1,7 +1,8 @@
 import os
+import sys
 import json
 from datetime import datetime
-from calculator.decorators import show_code_author
+from calculator.decorators import show_code_author, measure_time
 from collections import namedtuple
 from calculator.calc import ComplexNumber
 
@@ -26,15 +27,20 @@ class Controller:
             json.dump(self.results, file_json)
 
     @show_code_author
+    @measure_time
     def action(self, real1: int, imag1: int, real2: int, imag2: int, operator: str):
         try:
             result = eval(f'ComplexNumber({real1}, {imag1}){operator}ComplexNumber({real2}, {imag2})')
-            operation = f"{real1}{'+' if int(imag1) > 0 else '-'}{imag1}j {operator} {real2}{'+' if int(imag2) > 0 else '-'}{imag2}j"
+            operation = f"{real1}{'+' if int(imag1) > 0 else ''}{imag1}j {operator} {real2}{'+' if int(imag2) > 0 else ''}{imag2}j"
             result_with_tuple = self.create_tuple(result)
             self.add_result(result_with_tuple, operation)
             return result
         except ValueError:
-            print("Wrong input")
+            print("Wrong input", sys.exc_info())
+        except KeyError:
+            print("Wrong input", sys.exc_info())
+        except ZeroDivisionError:
+            print("Divided by 0!", sys.exc_info())
 
     def create_tuple(self, result: complex):
         Result_with_date = namedtuple('Result_with_date', 'result date')
@@ -47,13 +53,17 @@ class Controller:
             return dict(sorted(self.results.items(), key=lambda x: eval(x[1][0]).real))
         elif method == "date":
             return dict(sorted(self.results.items(),
-                               key=lambda x: datetime.strptime(x[1][1],"%d/%m/%Y").strftime("%Y-%m-%d")))
+                               key=lambda x: datetime.strptime(x[1][1], "%d/%m/%Y").strftime("%Y-%m-%d")))
+        else:
+            raise Exception("Wrong method")
 
     def filer_results(self, operator: str, number: int, method="imag"):
         if method == "imag":
             return dict(filter(lambda x:  eval(f'complex(x[1][0]).imag {operator} {number}'), self.results.items()))
         elif method == "real":
             return dict(filter(lambda x:  eval(f'complex(x[1][0]).real {operator} {number}'), self.results.items()))
+        else:
+            raise Exception("Wrong method")
 
 
 
